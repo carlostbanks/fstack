@@ -1,29 +1,21 @@
 import React, {useState, useEffect} from "react"
-import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup, Line } from "react-simple-maps"
+import { MapContainer, TileLayer, Marker, Polyline, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 import './App.css';
 
-const dummyData = [
-  {
-    altitude: 482.77,
-    latitude: 40.71285,
-    longitude: -74.00355,
-    timestamp: "2025-03-11T14:53:25.375173",
-  },
-  {
-    altitude: 547.93,
-    latitude: 40.71512,
-    longitude: -74.00361,
-    timestamp: "2025-03-11T14:53:29.517448",
-  },
-];
-
-const geoUrl = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
 const apiUrl = "http://127.0.0.1:5055/api/balloon-data";
+
+const balloonIcon = new L.Icon({
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png", // Example balloon icon
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+  popupAnchor: [0, -30]
+});
 
 function App() {
   const [balloonData, setBalloonData] = useState([]);
-  const [zoomLevel, setZoomLevel] = useState(8);
-  const [center, setCenter] = useState([-74.006, 40.7128]); // Default to NYC
+  const [mapCenter, setMapCenter] = useState([40.7128, -74.006]); // Default to NYC
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,9 +25,9 @@ function App() {
         const data = await response.json();
         if (data.length > 0) {
           setBalloonData(data);
-          // Auto-center on the latest point
+          // Center map on latest balloon location
           const lastPoint = data[data.length - 1];
-          setCenter([lastPoint.longitude, lastPoint.latitude]);
+          setMapCenter([lastPoint.latitude, lastPoint.longitude]);
         }
       } catch (error) {
         console.error("Error fetching balloon data:", error);
@@ -49,43 +41,25 @@ function App() {
 
   return (
     <div className="App">
-      <ComposableMap projection="geoAlbersUsa">
-        <ZoomableGroup center={center} zoom={zoomLevel} minZoom={5} maxZoom={12}>
-          <Geographies geography={geoUrl}>
-            {({ geographies }) =>
-              geographies.map((geo) => (
-                <Geography
-                  key={geo.rsmKey}
-                  geography={geo}
-                  style={{
-                    default: { fill: "#DDD", stroke: "#FFF" },
-                    hover: { fill: "#F53", stroke: "#FFF" },
-                    pressed: { fill: "#E42", stroke: "#FFF" },
-                  }}
-                />
-              ))
-            }
-          </Geographies>
-          {/* Draw the trajectory line */}
-          {balloonData.length > 1 && (
-            <Line
-              coordinates={balloonData.map((point) => [point.longitude, point.latitude])}
-              stroke="#FF0000"
-              strokeWidth={2}
-              strokeLinecap="round"
-            />
-          )}
-          {/* Render Markers for Balloons */}
-          {balloonData.map((balloon, index) => (
-            <Marker key={index} coordinates={[balloon.longitude, balloon.latitude]}>
-              <circle r={5 / zoomLevel} fill="red" stroke="black" strokeWidth={0.5 / zoomLevel} />
-              <text textAnchor="middle" y={-10 / zoomLevel} fontSize={10 / zoomLevel} fill="black">
-                {`${balloon.altitude.toFixed(0)}m`}
-              </text>
-            </Marker>
-          ))}
-        </ZoomableGroup>
-      </ComposableMap>
+      <MapContainer center={mapCenter} zoom={12} scrollWheelZoom={true} style={{ height: "90vh", width: "100%" }}>
+        {/* Tile layer for real-world map */}
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        
+        {/* Draw the trajectory line */}
+        {balloonData.length > 1 && (
+          <Polyline positions={balloonData.map((point) => [point.latitude, point.longitude])} color="red" />
+        )}
+
+        {/* Render Markers for Balloons */}
+        {balloonData.map((balloon, index) => (
+          <Marker key={index} position={[balloon.latitude, balloon.longitude]} icon={balloonIcon}>
+            <Popup>
+              Altitude: {balloon.altitude.toFixed(0)}m <br />
+              Time: {new Date(balloon.timestamp).toLocaleTimeString()}
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
     </div>
   );
 }
