@@ -24,7 +24,14 @@ function App() {
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const data = await response.json();
         if (data.length > 0) {
-          setBalloonData(data);
+          setBalloonData((prevData) => {
+            // Ensure new data points are added without removing previous ones
+            const newPoints = data.filter(newPoint => 
+              !prevData.some(existingPoint => existingPoint.timestamp === newPoint.timestamp)
+            );
+            // Merge and sort all data points by timestamp
+            return [...prevData, ...newPoints].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+          });
           // Center map on latest balloon location
           const lastPoint = data[data.length - 1];
           setMapCenter([lastPoint.latitude, lastPoint.longitude]);
@@ -45,7 +52,7 @@ function App() {
         {/* Tile layer for real-world map */}
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         
-        {/* Draw the trajectory line */}
+        {/* Draw the trajectory line with full history */}
         {balloonData.length > 1 && (
           <Polyline positions={balloonData.map((point) => [point.latitude, point.longitude])} color="red" />
         )}
@@ -54,8 +61,10 @@ function App() {
         {balloonData.map((balloon, index) => (
           <Marker key={index} position={[balloon.latitude, balloon.longitude]} icon={balloonIcon}>
             <Popup>
-              Altitude: {balloon.altitude.toFixed(0)}m <br />
-              Time: {new Date(balloon.timestamp).toLocaleTimeString()}
+              <b>Latitude:</b> {balloon.latitude.toFixed(6)} <br />
+              <b>Longitude:</b> {balloon.longitude.toFixed(6)} <br />
+              <b>Altitude:</b> {balloon.altitude.toFixed(2)}m <br />
+              <b>Timestamp:</b> {new Date(balloon.timestamp).toLocaleString()} <br />
             </Popup>
           </Marker>
         ))}
