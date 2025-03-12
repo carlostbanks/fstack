@@ -1,8 +1,9 @@
-import React, {useState, useEffect} from "react"
+import React, { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Polyline, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import './App.css';
+import AltitudeChart from "./AltitudeChart";
 
 const apiUrl = "http://127.0.0.1:5055/api/balloon-data";
 
@@ -71,33 +72,32 @@ function App() {
 
   return (
     <div className="App">
-      <div className="map-container">
-        <button className="play-button" onClick={() => setPlaying(!playing)}>
-          {playing ? "Stop" : "Play"}
-        </button>
-        <MapContainer center={mapCenter} zoom={12} scrollWheelZoom={true} className="leaflet-map">
-          {/* Tile layer for real-world map */}
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-          
-          {/* Draw the trajectory line with animation or full history */}
-          {playing ? (
-            <Polyline positions={animatedPath.map((point) => [point.latitude, point.longitude])} color="red" />
-          ) : (
-            <Polyline positions={balloonData.map((point) => [point.latitude, point.longitude])} color="red" />
-          )}
-
-          {/* Render Markers for Balloons */}
-          {(playing ? animatedMarkers : balloonData).map((balloon, index) => (
-            <Marker key={index} position={[balloon.latitude, balloon.longitude]} icon={balloonIcon}>
-              <Popup>
-                <b>Latitude:</b> {balloon.latitude.toFixed(6)} <br />
-                <b>Longitude:</b> {balloon.longitude.toFixed(6)} <br />
-                <b>Altitude:</b> {balloon.altitude.toFixed(2)}m <br />
-                <b>Timestamp:</b> {new Date(balloon.timestamp).toLocaleString()} <br />
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
+      <h1>Balloon Tracking System by Carlos Banks</h1>
+      <button className="play-button" onClick={() => setPlaying(!playing)}>
+        {playing ? "Stop" : "Play"}
+      </button>
+      <div className="container">
+        <div className="map-container">
+          <MapContainer center={mapCenter} zoom={12} scrollWheelZoom={true} className="leaflet-map">
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            {playing ? (
+              <Polyline positions={animatedPath.map((point) => [point.latitude, point.longitude])} color="red" />
+            ) : (
+              <Polyline positions={balloonData.map((point) => [point.latitude, point.longitude])} color="red" />
+            )}
+            {(playing ? animatedMarkers : balloonData).map((balloon, index) => (
+              <Marker key={index} position={[balloon.latitude, balloon.longitude]} icon={balloonIcon}>
+                <Popup>
+                  <b>Latitude:</b> {balloon.latitude.toFixed(6)} <br />
+                  <b>Longitude:</b> {balloon.longitude.toFixed(6)} <br />
+                  <b>Altitude:</b> {balloon.altitude.toFixed(2)}m <br />
+                  <b>Timestamp:</b> {new Date(balloon.timestamp).toLocaleString()} <br />
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+        </div>
+        <AltitudeChart balloonData={balloonData} />
       </div>
     </div>
   );

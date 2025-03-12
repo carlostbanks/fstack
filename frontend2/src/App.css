@@ -3,22 +3,49 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   height: 100vh;
   background-color: #f4f4f4;
+  padding-top: 10px;
+}
+
+h1 {
+  font-size: 24px;
+  margin-bottom: 15px;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  width: 95%;
+  max-width: 1400px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    align-items: center;
+  }
 }
 
 .map-container {
-  width: 90%;
-  max-width: 1000px;
+  flex: 2;
   height: 80vh;
   background: white;
   border-radius: 10px;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
   padding: 15px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  margin-right: 15px;
+}
+
+.chart-container {
+  flex: 1;
+  height: 80vh;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 15px;
 }
 
 .leaflet-map {
@@ -36,7 +63,7 @@
   border-radius: 5px;
   cursor: pointer;
   transition: background 0.3s;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 
 .play-button:hover {
