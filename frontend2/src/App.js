@@ -16,6 +16,10 @@ const balloonIcon = new L.Icon({
 function App() {
   const [balloonData, setBalloonData] = useState([]);
   const [mapCenter, setMapCenter] = useState([40.7128, -74.006]); // Default to NYC
+  const [playing, setPlaying] = useState(false);
+  const [animationIndex, setAnimationIndex] = useState(0);
+  const [animatedPath, setAnimatedPath] = useState([]);
+  const [animatedMarkers, setAnimatedMarkers] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,29 +50,55 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (playing) {
+      setAnimatedPath([]);
+      setAnimatedMarkers([]);
+      setAnimationIndex(0);
+    }
+  }, [playing]);
+
+  useEffect(() => {
+    if (playing && animationIndex < balloonData.length) {
+      const timer = setTimeout(() => {
+        setAnimatedPath(balloonData.slice(0, animationIndex + 1));
+        setAnimatedMarkers(balloonData.slice(0, animationIndex + 1));
+        setAnimationIndex(animationIndex + 1);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [playing, animationIndex, balloonData]);
+
   return (
     <div className="App">
-      <MapContainer center={mapCenter} zoom={12} scrollWheelZoom={true} style={{ height: "90vh", width: "100%" }}>
-        {/* Tile layer for real-world map */}
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        
-        {/* Draw the trajectory line with full history */}
-        {balloonData.length > 1 && (
-          <Polyline positions={balloonData.map((point) => [point.latitude, point.longitude])} color="red" />
-        )}
+      <div className="map-container">
+        <button className="play-button" onClick={() => setPlaying(!playing)}>
+          {playing ? "Stop" : "Play"}
+        </button>
+        <MapContainer center={mapCenter} zoom={12} scrollWheelZoom={true} className="leaflet-map">
+          {/* Tile layer for real-world map */}
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          
+          {/* Draw the trajectory line with animation or full history */}
+          {playing ? (
+            <Polyline positions={animatedPath.map((point) => [point.latitude, point.longitude])} color="red" />
+          ) : (
+            <Polyline positions={balloonData.map((point) => [point.latitude, point.longitude])} color="red" />
+          )}
 
-        {/* Render Markers for Balloons */}
-        {balloonData.map((balloon, index) => (
-          <Marker key={index} position={[balloon.latitude, balloon.longitude]} icon={balloonIcon}>
-            <Popup>
-              <b>Latitude:</b> {balloon.latitude.toFixed(6)} <br />
-              <b>Longitude:</b> {balloon.longitude.toFixed(6)} <br />
-              <b>Altitude:</b> {balloon.altitude.toFixed(2)}m <br />
-              <b>Timestamp:</b> {new Date(balloon.timestamp).toLocaleString()} <br />
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+          {/* Render Markers for Balloons */}
+          {(playing ? animatedMarkers : balloonData).map((balloon, index) => (
+            <Marker key={index} position={[balloon.latitude, balloon.longitude]} icon={balloonIcon}>
+              <Popup>
+                <b>Latitude:</b> {balloon.latitude.toFixed(6)} <br />
+                <b>Longitude:</b> {balloon.longitude.toFixed(6)} <br />
+                <b>Altitude:</b> {balloon.altitude.toFixed(2)}m <br />
+                <b>Timestamp:</b> {new Date(balloon.timestamp).toLocaleString()} <br />
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </div>
     </div>
   );
 }
