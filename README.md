@@ -1,4 +1,4 @@
-# Balloon Tracking System - Interview Task
+# Balloon Tracking System
 
 This is a full-stack development task to assess your skills in building a real-time tracking system for a balloon's journey.
 
